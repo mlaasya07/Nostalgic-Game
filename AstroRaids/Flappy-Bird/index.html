@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="/assets/heart.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Play Flappy Bird - A Fun and Addictive Game!">
+<meta name="author" content="Laasya">
+<meta name="keywords" content="Flappy Bird, HTML5 Game, Arcade Game, Bird Game, Endless Runner">
+<meta property="og:title" content="Flappy Bird">
+<meta property="og:description" content="Play Flappy Bird - A Fun and Addictive Game!">
+<meta property="og:image" content="birb.png">
+<meta property="og:type" content="website">
+  <title>Flappy Bird</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      font-family: monospace;
+    }
+
+    .background {
+      height: 100vh;
+      width: 100vw;
+      background-color: skyblue;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .bird {
+      height: 100px;
+      width: 160px;
+      position: fixed;
+      top: 40vh;
+      left: 30vw;
+      z-index: 100;
+    }
+
+    .pipe_sprite {
+      position: fixed;
+      top: 40vh;
+      left: 100vw;
+      height: 70vh;
+      width: 6vw;
+      background-color: green;
+    }
+
+    .message {
+      position: fixed;
+      z-index: 10;
+      height: 10vh;
+      font-size: 10vh;
+      font-weight: 100;
+      color: black;
+      top: 12vh;
+      left: 20vw;
+      text-align: center;
+    }
+
+    .score {
+      position: fixed;
+      z-index: 10;
+      height: 10vh;
+      font-size: 10vh;
+      font-weight: 100;
+      color: goldenrod;
+      top: 0;
+      left: 0;
+    }
+
+    .score_val {
+      color: gold;
+    }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  <img class="bird" src="birb.png" alt="bird-img">
+  <div class="message">Press Enter To Start Game</div>
+  <div class="score">
+    <span class="score_title"></span>
+    <span class="score_val"></span>
+  </div>
+
+<script>
+  // Game constants
+  let move_speed = 3;
+  let gravity = 0.5;
+
+  let bird = document.querySelector('.bird');
+  let bird_props = bird.getBoundingClientRect();
+  let background = document.querySelector('.background').getBoundingClientRect();
+
+  let score_val = document.querySelector('.score_val');
+  let message = document.querySelector('.message');
+  let score_title = document.querySelector('.score_title');
+
+  let game_state = 'Start';
+
+  // Start game with Enter key or tap
+  function startGame() {
+    if (game_state != 'Play') {
+      document.querySelectorAll('.pipe_sprite').forEach(p => p.remove());
+      bird.style.top = '40vh';
+      game_state = 'Play';
+      message.innerHTML = '';
+      score_title.innerHTML = 'Score : ';
+      score_val.innerHTML = '0';
+      play();
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') startGame();
+    if ((e.key === 'ArrowUp' || e.key === ' ') && game_state === 'Play') bird_dy = -7.6;
+  });
+
+  document.addEventListener('touchstart', e => {
+    if (game_state === 'Start') startGame();
+    if (game_state === 'Play') bird_dy = -7.6;
+  });
+
+  let bird_dy = 0;
+
+  function play() {
+    let pipe_seperation = 0;
+    let pipe_gap = 35;
+
+    function move() {
+      if (game_state != 'Play') return;
+
+      document.querySelectorAll('.pipe_sprite').forEach(element => {
+        let pipe_props = element.getBoundingClientRect();
+        bird_props = bird.getBoundingClientRect();
+
+        if (pipe_props.right <= 0) {
+          element.remove();
+        } else {
+          if (
+            bird_props.left < pipe_props.left + pipe_props.width &&
+            bird_props.left + bird_props.width > pipe_props.left &&
+            bird_props.top < pipe_props.top + pipe_props.height &&
+            bird_props.top + bird_props.height > pipe_props.top
+          ) {
+            game_state = 'End';
+            message.innerHTML = 'Tap To Restart';
+            message.style.left = '28vw';
+            return;
+          } else {
+            if (pipe_props.right < bird_props.left &&
+                pipe_props.right + move_speed >= bird_props.left &&
+                element.increase_score == '1') {
+              score_val.innerHTML = +score_val.innerHTML + 1;
+            }
+            element.style.left = pipe_props.left - move_speed + 'px';
+          }
+        }
+      });
+
+      requestAnimationFrame(move);
+    }
+
+    function apply_gravity() {
+      if (game_state != 'Play') return;
+
+      bird_dy += gravity;
+
+      // Collision with top/bottom
+      if (bird_props.top <= 0 || bird_props.bottom >= background.bottom) {
+        game_state = 'End';
+        message.innerHTML = 'Tap To Restart';
+        message.style.left = '28vw';
+        return;
+      }
+
+      bird.style.top = bird_props.top + bird_dy + 'px';
+      bird_props = bird.getBoundingClientRect();
+      requestAnimationFrame(apply_gravity);
+    }
+
+    function create_pipe() {
+      if (game_state != 'Play') return;
+
+      if (pipe_seperation > 115) {
+        pipe_seperation = 0;
+        let pipe_posi = Math.floor(Math.random() * 43) + 8;
+
+        let pipe_top = document.createElement('div');
+        pipe_top.className = 'pipe_sprite';
+        pipe_top.style.top = pipe_posi - 70 + 'vh';
+        pipe_top.style.left = '100vw';
+        document.body.appendChild(pipe_top);
+
+        let pipe_bottom = document.createElement('div');
+        pipe_bottom.className = 'pipe_sprite';
+        pipe_bottom.style.top = pipe_posi + pipe_gap + 'vh';
+        pipe_bottom.style.left = '100vw';
+        pipe_bottom.increase_score = '1';
+        document.body.appendChild(pipe_bottom);
+      }
+
+      pipe_seperation++;
+      requestAnimationFrame(create_pipe);
+    }
+
+    requestAnimationFrame(move);
+    requestAnimationFrame(apply_gravity);
+    requestAnimationFrame(create_pipe);
+  }
+</script>
+</body>
+</html>
