@@ -214,15 +214,12 @@ function gameLoop() {
 
 // Apply cheat: +20 score
 function applyCheat() {
-  if (gameState !== 'Play') return; // <<< NEW: only works while playing
   if (cheatCooldown) return;
-
   cheatCooldown = true;
   setTimeout(() => cheatCooldown = false, COOLDOWN_MS);
 
   score += 20;
   scoreDisplay.innerText = score;
-
   // show quick feedback
   cheatMsg.style.display = 'block';
   setTimeout(() => cheatMsg.style.display = 'none', 900);
