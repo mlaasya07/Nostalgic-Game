@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flappy Bird</title>
+<link rel="icon" type="image/png" href="./heart.png">
+<style>
+  * { 
+    margin:0; 
+    padding:0; 
+    box-sizing:border-box; 
+    }
+  body { 
+    font-family: monospace; 
+    overflow:hidden; 
+    height:100vh; 
+    width:100vw; 
+    background: url('background.jpg'); 
+    position: relative; }
+
+  .bird {
+    position: absolute;
+    width: 60px; 
+    height: 60px;
+    top: 40vh; 
+    left: 30vw;
+  }
+
+  .pipe {
+    position: absolute; width: 60px; background: green;
+  }
+
+  .score {
+    position: absolute; 
+    top: 10px; left: 10px; font-size:2em; color: #000;
+    z-index: 1000;
+  }
+
+  .start-button {
+    position: absolute;
+    top: 40vh;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 30px;
+    font-size: 1.5em;
+    background: gold;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    z-index: 1000;
+  }
+  .start-button:hover {
+    background: #000;
+    color: honeydew;
+  }
+
+  .message {
+    position: absolute; 
+    top: 20vh; 
+    width: 100%; 
+    text-align:center;
+    font-size: 3em; color: gold ;
+    z-index: 1000;
+  }
+
+  /* Cheat feedback */
+  .cheat-msg {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.2em;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    z-index: 1001;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<img src="birb_.png" class="bird" alt="bird">
+<div class="score">Score: <span class="score_val">0</span></div>
+<button class="start-button">Start Game</button>
+<div class="message" style="display:none;">Oops! You hit the birb</div>
+<div class="cheat-msg" id="cheatMsg">Cheat: +20!</div>
+
+<script>
+const bird = document.querySelector('.bird');
+const startBtn = document.querySelector('.start-button');
+const message = document.querySelector('.message');
+const scoreDisplay = document.querySelector('.score_val');
+const cheatMsg = document.getElementById('cheatMsg');
+
+let birdY = bird.offsetTop;
+let birdDY = 0;
+let gravity = 0.5;
+let jump = -8;
+let pipes = [];
+let pipeGap = 200;
+let pipeWidth = 60;
+let gameState = 'Start';
+let score = 0;
+let pipeInterval = 0;
+
+// Cheat-related
+let keysPressed = new Set();
+let lastKeys = []; // for sequence detection
+let lastKeyTs = 0;
+let cheatCooldown = false; // small cooldown to avoid rapid repeats
+const SEQ_WINDOW = 700; // ms for sequence detection
+const COOLDOWN_MS = 700; // ms between cheat activations
+
+// Start game function
+function startGame() {
+  gameState = 'Play';
+  startBtn.style.display = 'none';
+  message.style.display = 'none';
+  birdY = window.innerHeight/2 - bird.offsetHeight/2;
+  bird.style.top = birdY + 'px';
+  birdDY = 0;
+  score = 0;
+  scoreDisplay.innerText = score;
+  pipes.forEach(p=>p.remove());
+  pipes = [];
+  pipeInterval = 0;
+  requestAnimationFrame(gameLoop);
+}
+
+// End game function
+function endGame() {
+  gameState = 'End';
+  message.style.display = 'block';
+  startBtn.innerText = 'Restart Game';
+  startBtn.style.display = 'block';
+}
+
+// Create pipes
+function createPipe() {
+  const pipeTopHeight = Math.random() * (window.innerHeight - pipeGap - 100) + 50;
+  const pipeBottomHeight = window.innerHeight - pipeTopHeight - pipeGap;
+
+  const pipeTop = document.createElement('div');
+  pipeTop.className = 'pipe';
+  pipeTop.style.height = pipeTopHeight + 'px';
+  pipeTop.style.top = '0px';
+  pipeTop.style.left = window.innerWidth + 'px';
+  document.body.appendChild(pipeTop);
+
+  const pipeBottom = document.createElement('div');
+  pipeBottom.className = 'pipe';
+  pipeBottom.style.height = pipeBottomHeight + 'px';
+  pipeBottom.style.bottom = '0px';
+  pipeBottom.style.left = window.innerWidth + 'px';
+  document.body.appendChild(pipeBottom);
+
+  pipes.push(pipeTop, pipeBottom);
+}
+
+// Game loop
+function gameLoop() {
+  if(gameState !== 'Play') return;
+
+  // Bird movement
+  birdDY += gravity;
+  birdY += birdDY;
+  bird.style.top = birdY + 'px';
+
+  // Check collision with floor/ceiling
+  if(birdY <= 0 || birdY + bird.offsetHeight >= window.innerHeight) {
+    endGame();
+    return;
+  }
+
+  // Pipe creation
+  pipeInterval++;
+  if(pipeInterval > 90){
+    createPipe();
+    pipeInterval = 0;
+  }
+
+  // Move pipes and check collisions
+  pipes.forEach(pipe => {
+    pipe.style.left = (pipe.offsetLeft - 3) + 'px';
+    const pipeRect = pipe.getBoundingClientRect();
+    const birdRect = bird.getBoundingClientRect();
+
+    if(birdRect.left < pipeRect.right &&
+       birdRect.right > pipeRect.left &&
+       birdRect.top < pipeRect.bottom &&
+       birdRect.bottom > pipeRect.top) {
+      endGame();
+      return;
+    }
+
+    // Scoring
+    if(!pipe.scored && pipeRect.right < birdRect.left){
+      pipe.scored = true;
+      if(pipe.style.bottom !== '') score++; // count only bottom pipes
+      scoreDisplay.innerText = score;
+    }
+
+    // Remove offscreen pipes
+    if(pipe.offsetLeft + pipeWidth < 0) {
+      pipe.remove();
+      pipes = pipes.filter(p => p !== pipe);
+    }
+  });
+
+  requestAnimationFrame(gameLoop);
+}
+
+// Apply cheat: +20 score
+function applyCheat() {
+  if (gameState !== 'Play') return; // <<< NEW: only works while playing
+  if (cheatCooldown) return;
+
+  cheatCooldown = true;
+  setTimeout(() => cheatCooldown = false, COOLDOWN_MS);
+
+  score += 20;
+  scoreDisplay.innerText = score;
+
+  // show quick feedback
+  cheatMsg.style.display = 'block';
+  setTimeout(() => cheatMsg.style.display = 'none', 900);
+}
+
+// Key handling: space/arrow up for jump
+document.addEventListener('keydown', e => {
+  // regular controls
+  if(e.key === ' ' || e.key === 'ArrowUp') {
+    if (gameState === 'Play') birdDY = jump;
+  }
+
+  // ---- Cheat detection ----
+  const k = e.key.toLowerCase();
+  // Only letters matter for this cheat
+  if(k.length === 1 && /[a-z]/.test(k)) {
+    keysPressed.add(k);
+
+    // simultaneous press detection: both 'l' and 'k' held
+    if (keysPressed.has('l') && keysPressed.has('k')) {
+      applyCheat();
+    }
+
+    // sequence detection: watch last keys with time window
+    const now = Date.now();
+    if (now - lastKeyTs > SEQ_WINDOW) lastKeys = []; // reset sequence if too slow
+    lastKeyTs = now;
+    lastKeys.push(k);
+    if (lastKeys.length > 3) lastKeys.shift(); // keep last few
+
+    // check for sequence 'l' then 'k' (case-insensitive)
+    const seq = lastKeys.slice(-2).join('');
+    if(seq === 'lk') {
+      applyCheat();
+      lastKeys = []; // consume sequence
+    }
+  }
+});
+
+// Remove from set on keyup
+document.addEventListener('keyup', e => {
+  const k = e.key.toLowerCase();
+  if(k.length === 1 && /[a-z]/.test(k)) {
+    keysPressed.delete(k);
+  }
+});
+
+// touch support for jump
+document.addEventListener('touchstart', e => {
+  if(gameState === 'Play') birdDY = jump;
+});
+
+startBtn.addEventListener('click', startGame);
+</script>
+
+</body>
+</html>
