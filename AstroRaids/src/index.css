@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import '@fontsource/roboto-mono/400.css';
+@import '@fontsource/roboto-mono/700.css';
+
+* {
+  font-family: 'Roboto Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', monospace;
+}
+
+/* Pixelated text effect */
+.pixel-text {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  text-rendering: optimizeSpeed;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-shadow: 
+    1px 1px 0px rgba(0,0,0,0.8),
+    2px 2px 0px rgba(0,0,0,0.4);
+}
+
+.retro-glow {
+  text-shadow: 
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 15px currentColor,
+    1px 1px 0px rgba(0,0,0,0.8);
+}
+
+/* Start Screen Styles */
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: radial-gradient(ellipse at center, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+}
+
+.welcome-message {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #ff1493;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 600px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(255, 20, 147, 0.3);
+}
+
+.greeting {
+  color: #00ffff;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-shadow: 0 0 10px currentColor;
+  letter-spacing: 0.1em;
+}
+
+.rules-container h3 {
+  color: #ff1493;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 8px currentColor;
+  letter-spacing: 0.15em;
+}
+
+.rules-grid {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.rule-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 20, 147, 0.1);
+  border: 1px solid rgba(255, 20, 147, 0.3);
+  border-radius: 8px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2rem;
+  border-radius: 1rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-shadow: none;
+}
+
+.red-pill {
+  background: #ff6b35;
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+}
+
+.cyan-pill {
+  background: #00ffff;
+  color: #0f0f23;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.blue-pill {
+  background: #4169e1;
+  color: white;
+  box-shadow: 0 0 10px rgba(65, 105, 225, 0.5);
+}
+
+.control-pill {
+  background: #ff1493;
+  color: white;
+  box-shadow: 0 0 10px rgba(255, 20, 147, 0.5);
+}
+
+.rule-text {
+  color: #00ffff;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+.game-button {
+  background: linear-gradient(45deg, #ff1493, #ff6b35);
+  border: 2px solid #ff1493;
+  color: white;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 700;
+  font-size: 1.125rem;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  box-shadow: 0 0 20px rgba(255, 20, 147, 0.4);
+}
+
+.game-button:hover {
+  background: linear-gradient(45deg, #ff6b35, #ff1493);
+  box-shadow: 0 0 30px rgba(255, 20, 147, 0.6);
+  transform: translateY(-2px);
+}
+
+.button-text {
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.hidden {
+  display: none !important;
+}
