@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <link rel="icon" type="image/png" href="assets/heart.png">
+  <link rel="icon" type="image/png" href="./heart.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="AstroRaids - A Retro Arcade Game Collection">
   <meta name="author" content="Laasya">
@@ -27,6 +27,7 @@
     }
 
     .pixel-text {
+      user-select:none;
       font-family: 'Roboto Mono', monospace;
       font-size: 72px;
       font-weight: 700;
@@ -58,6 +59,7 @@
 
     /* Flickering scanlines overlay */
     .pixel-text::after {
+      user-select: none;
       content: "";
       display: block;
       position: absolute;
