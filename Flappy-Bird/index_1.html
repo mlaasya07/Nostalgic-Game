@@ -85,14 +85,16 @@
 <div class="score">Score: <span class="score_val">0</span></div>
 <button class="start-button">Start Game</button>
 <div class="message" style="display:none;">Oops! You hit the birb</div>
-<div class="cheat-msg" id="cheatMsg">Cheat: +20!</div>
+<div class="cheat-msg" id="cheatMsg20">Cheat: +20!</div>
+<div class="cheat-msg" id="cheatMsg40">Cheat: +40!</div>
 
 <script>
 const bird = document.querySelector('.bird');
 const startBtn = document.querySelector('.start-button');
 const message = document.querySelector('.message');
 const scoreDisplay = document.querySelector('.score_val');
-const cheatMsg = document.getElementById('cheatMsg');
+const cheatMsg = document.getElementById('cheatMsg20');
+const cheatMsgs = document.getElementById('cheatMsg40');
 
 let birdY = bird.offsetTop;
 let birdDY = 0;
@@ -213,57 +215,54 @@ function gameLoop() {
 }
 
 // Apply cheat: +20 score
-function applyCheat() {
+// Cheats
+function applyCheat20() {
   if (cheatCooldown) return;
   cheatCooldown = true;
   setTimeout(() => cheatCooldown = false, COOLDOWN_MS);
 
   score += 20;
   scoreDisplay.innerText = score;
-  // show quick feedback
-  cheatMsg.style.display = 'block';
-  setTimeout(() => cheatMsg.style.display = 'none', 900);
+
+  cheatMsg20.style.display = 'block';
+  setTimeout(() => cheatMsg20.style.display = 'none', 900);
 }
 
-// Key handling: space/arrow up for jump
+function applyCheat40() {
+  if (cheatCooldown) return;
+  cheatCooldown = true;
+  setTimeout(() => cheatCooldown = false, COOLDOWN_MS);
+
+  score += 40;
+  scoreDisplay.innerText = score;
+
+  cheatMsg40.style.display = 'block';
+  setTimeout(() => cheatMsg40.style.display = 'none', 900);
+}
+
+// Key handling
 document.addEventListener('keydown', e => {
-  // regular controls
   if(e.key === ' ' || e.key === 'ArrowUp') {
     if (gameState === 'Play') birdDY = jump;
   }
 
-  // ---- Cheat detection ----
   const k = e.key.toLowerCase();
-  // Only letters matter for this cheat
   if(k.length === 1 && /[a-z]/.test(k)) {
-    keysPressed.add(k);
-
-    // simultaneous press detection: both 'l' and 'k' held
-    if (keysPressed.has('l') && keysPressed.has('k')) {
-      applyCheat();
-    }
-
-    // sequence detection: watch last keys with time window
     const now = Date.now();
-    if (now - lastKeyTs > SEQ_WINDOW) lastKeys = []; // reset sequence if too slow
+    if (now - lastKeyTs > SEQ_WINDOW) lastKeys = [];
     lastKeyTs = now;
     lastKeys.push(k);
-    if (lastKeys.length > 3) lastKeys.shift(); // keep last few
+    if (lastKeys.length > 2) lastKeys.shift();
 
-    // check for sequence 'l' then 'k' (case-insensitive)
-    const seq = lastKeys.slice(-2).join('');
+    const seq = lastKeys.join('');
     if(seq === 'lk') {
-      applyCheat();
-      lastKeys = []; // consume sequence
+      applyCheat20();
+      lastKeys = [];
     }
-  }
-});
-
-// Remove from set on keyup
-document.addEventListener('keyup', e => {
-  const k = e.key.toLowerCase();
-  if(k.length === 1 && /[a-z]/.test(k)) {
-    keysPressed.delete(k);
+    if(seq === 'kl') {
+      applyCheat40();
+      lastKeys = [];
+    }
   }
 });
 
