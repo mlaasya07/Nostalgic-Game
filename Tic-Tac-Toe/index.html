@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="description" content="A simple two-player Tic Tac Toe game built with HTML, CSS, and JavaScript.">
+<meta name="author" content="Laasya">
+<meta name="keywords" content="Tic Tac Toe, Two Player, HTML5 Game, JavaScript Game, Simple Game, Board Game">
+<meta property="og:title" content="Tic Tac Toe — Two Player">
+<meta property="og:description" content="A simple two-player Tic Tac Toe game built with HTML, CSS, and JavaScript.">
+<meta property="og:image" content="og-image.png">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/png" href="../heart.png">    
+<link href="https://fonts.googleapis.com/css?family=Roboto+Mono:700&display=swap" rel="stylesheet">
+
+
+  <title>TicTacToe — 2 Player</title>
+  <style>
+    :root{
+        --bg:#0f1724;
+        --card:#0b1220;
+        --accent:#cf0347;
+        --x:#ff4d4d;
+        --o:#3399ff;
+        --muted:#94a3b8
+    }
+    *{
+        box-sizing:border-box
+    }
+
+    html,body{
+        height:100%
+    }
+
+    body{
+        margin:0;
+        font-family:Roboto Mono,monospace;
+        background:linear-gradient(180deg,#071029 0%, #071720 100%);
+        color:#7dd3fc;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:24px
+    }
+
+    .wrap{
+        width:min(520px,95vw);
+        background:radial-gradient(1200px 400px at 10% 10%, rgba(125,211,252,0.04), transparent),var(--card);
+        border-radius:16px;
+        padding:20px;
+        box-shadow:0 6px 30px rgba(2,6,23,0.6)
+    }
+
+    header{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        margin-bottom:12px
+    }
+
+    h1{
+        font-size:18px;
+        margin:0;
+        color: #3399ff;
+        user-select: none;
+    }
+
+    h2
+    {
+        font-size:16px;
+        color: #cf0347;
+        user-select: none;
+    }
+
+    .controls{
+        display:flex;
+        gap:8px;
+        align-items:center
+    }
+
+    button{
+        background:transparent;
+        border:1px solid rgba(255,255,255,0.06);
+        color:inherit;
+        padding:8px 10px;
+        border-radius:10px;
+        cursor:pointer
+    }
+
+    .button:hover(){
+        color: #cf0347
+    }
+
+    button.primary{
+        background:var(--accent);
+        color:#000;
+        box-shadow:0 4px 10px rgba(125,211,252,0.08)
+    }
+
+    .board{
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        gap:30px;
+        background:#071029;
+        padding:18px;
+        justify-content: center;   /* ✅ centers horizontally */
+        align-items: center;       /* ✅ centers vertically */
+        margin: 0 auto;  
+    }
+
+    .cell{
+        width:100px;
+        height:100px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:44px;
+        background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);
+        border-radius:12px;
+        cursor:pointer;
+        user-select:none
+    }
+
+    @media (max-width:420px){
+        .cell{
+            width:calc((95vw - 60px)/3);
+            height:calc((95vw - 60px)/3);
+            font-size:32px
+        }
+    }
+
+    .muted{
+        color:#cf0347;
+        font-size:20px;
+        user-select:none;
+    }
+
+    .status{
+        display:flex;
+        gap:12px;
+        align-items:center
+    }
+
+    .score{
+        display:flex;
+        gap:10px;
+        align-items:center
+    }
+
+    .score div{
+        background:rgba(255,255,255,0.03);
+        padding:6px 8px;
+        border-radius:8px;
+        font-size:13px
+    }
+
+    .cell.x{
+        color:var(--x)
+    }
+
+    .cell.o{
+        color:var(--o)
+    }
+    .cell.win{
+        box-shadow:0 6px 20px rgba(125,211,252,0.08);
+        transform:scale(1.04)
+    }
+    footer{
+        margin-top:12px;
+        width:100%;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="application" aria-label="Tic Tac Toe two player">
+    <header>
+      <h1>Tic Tac Toe — Two players (local)</h1>
+      <div class="controls">
+        <div class="h2" id="turnText">Turn: <strong id="turnPlayer">Player 1 (X)</strong></div>
+        <button id="resetBtn">Reset Board</button>
+        <button id="newGameBtn" class="primary">New Game</button>
+      </div>
+    </header>
+
+    <main>
+      <div style="margin-bottom:10px">
+        <label class="muted">Player 1, choose your symbol: </label>
+        <button id="chooseX" style="color: #cf0347;">X (Red)</button>
+        <button id="chooseO" style="color: #7dd3fc;">O (Blue)</button>
+      </div>
+
+      <div class="board" id="board" role="grid" aria-label="tic tac toe board">
+        <!-- 9 cells injected by JS -->
+      </div>
+
+      <div class="status" style="margin-top:10px;justify-content:space-between">
+        <div class="score" aria-live="polite">
+          <div>Player 1 (<span id="p1Symbol">X</span>): <span id="scoreP1">0</span></div>
+          <div>Player 2 (<span id="p2Symbol">O</span>): <span id="scoreP2">0</span></div>
+          <div>Draws: <span id="scoreD">0</span></div>
+        </div>
+        <div class="muted" id="message">Player 1 choose your symbol to start.</div>
+      </div>
+    </main>
+
+    <footer>
+    <div class="footer" style="color: #cf0347;">Made with ♥ • Two-player, no AI • Tip: press <kbd>R</kbd> to reset board</div>
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      const boardEl = document.getElementById('board');
+      const turnText = document.getElementById('turnPlayer');
+      const message = document.getElementById('message');
+      const resetBtn = document.getElementById('resetBtn');
+      const newGameBtn = document.getElementById('newGameBtn');
+      const scoreP1El = document.getElementById('scoreP1');
+      const scoreP2El = document.getElementById('scoreP2');
+      const scoreDEl = document.getElementById('scoreD');
+      const p1SymbolEl = document.getElementById('p1Symbol');
+      const p2SymbolEl = document.getElementById('p2Symbol');
+      const chooseXBtn = document.getElementById('chooseX');
+      const chooseOBtn = document.getElementById('chooseO');
+
+      let board = Array(9).fill(null);
+      let p1 = null;
+      let p2 = null;
+      let current = null;
+      let running = false;
+      let scores = {P1:0,P2:0,D:0};
+
+      const WIN_LINES = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ];
+
+      function createCells(){
+        boardEl.innerHTML = '';
+        for(let i=0;i<9;i++){
+          const c = document.createElement('button');
+          c.className = 'cell';
+          c.setAttribute('data-index', i);
+          c.setAttribute('aria-label', 'cell '+(i+1));
+          c.addEventListener('click', onCellClick);
+          boardEl.appendChild(c);
+        }
+      }
+
+      function onCellClick(e){
+        const idx = Number(e.currentTarget.dataset.index);
+        if(!running) return;
+        if(board[idx]) return;
+        board[idx] = current;
+        render();
+        const winInfo = checkWin();
+        if(winInfo.winner){
+          running = false;
+          const winnerPlayer = (winInfo.winner === p1) ? 'Player 1' : 'Player 2';
+          message.textContent = `${winnerPlayer} (${winInfo.winner}) wins!`;
+          if(winInfo.winner === p1) scores.P1++; else scores.P2++;
+          updateScores();
+          highlightWin(winInfo.line);
+        } else if(board.every(Boolean)){
+          running = false;
+          message.textContent = "It's a draw.";
+          scores.D++;
+          updateScores();
+        } else {
+          current = (current === p1) ? p2 : p1;
+          turnText.textContent = (current === p1) ? `Player 1 (${p1})` : `Player 2 (${p2})`;
+          message.textContent = `${turnText.textContent}'s turn.`;
+        }
+      }
+
+      function checkWin(){
+        for(const line of WIN_LINES){
+          const [a,b,c] = line;
+          if(board[a] && board[a] === board[b] && board[a] === board[c]){
+            return {winner: board[a], line};
+          }
+        }
+        return {winner: null};
+      }
+
+      function highlightWin(line){
+        line.forEach(i=>{
+          const cell = boardEl.querySelector(`[data-index='${i}']`);
+          if(cell) cell.classList.add('win');
+        })
+      }
+
+      function render(){
+        board.forEach((val,i)=>{
+          const cell = boardEl.querySelector(`[data-index='${i}']`);
+          cell.textContent = val || '';
+          cell.classList.toggle('x', val === 'X');
+          cell.classList.toggle('o', val === 'O');
+          if(!val) cell.classList.remove('win');
+        })
+      }
+
+      function resetBoard(){
+        board = Array(9).fill(null);
+        current = p1;
+        running = !!p1;
+        if(running){
+          turnText.textContent = `Player 1 (${p1})`;
+          message.textContent = 'Board reset — Player 1 goes first.';
+        } else {
+          message.textContent = 'Player 1 choose your symbol to start.';
+        }
+        render();
+      }
+
+      function newGame(){
+        board = Array(9).fill(null);
+        p1 = null;
+        p2 = null;
+        current = null;
+        running = false;
+        scores = {P1:0,P2:0,D:0};
+        updateScores();
+        p1SymbolEl.textContent = '—';
+        p2SymbolEl.textContent = '—';
+        turnText.textContent = 'Player 1 (choose symbol)';
+        message.textContent = 'Player 1 choose your symbol to start.';
+        render();
+      }
+
+      function updateScores(){
+        scoreP1El.textContent = scores.P1;
+        scoreP2El.textContent = scores.P2;
+        scoreDEl.textContent = scores.D;
+      }
+
+      chooseXBtn.addEventListener('click', ()=>{
+        p1 = 'X'; p2 = 'O';
+        p1SymbolEl.textContent = p1;
+        p2SymbolEl.textContent = p2;
+        current = p1;
+        running = true;
+        turnText.textContent = `Player 1 (${p1})`;
+        message.textContent = 'Player 1 starts the game.';
+        resetBoard();
+      });
+
+      chooseOBtn.addEventListener('click', ()=>{
+        p1 = 'O'; p2 = 'X';
+        p1SymbolEl.textContent = p1;
+        p2SymbolEl.textContent = p2;
+        current = p1;
+        running = true;
+        turnText.textContent = `Player 1 (${p1})`;
+        message.textContent = 'Player 1 starts the game.';
+        resetBoard();
+      });
+
+      document.addEventListener('keydown', (e)=>{
+        if(e.key.toLowerCase() === 'r') resetBoard();
+        if(e.key.toLowerCase() === 'n') newGame();
+      });
+
+      resetBtn.addEventListener('click', resetBoard);
+      newGameBtn.addEventListener('click', newGame);
+
+      createCells();
+      render();
+      updateScores();
+    })();
+  </script>
+</body>
+</html>
