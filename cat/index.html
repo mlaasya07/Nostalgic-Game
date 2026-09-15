@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Hello world! (mind the cats)</title>
+		<meta
+			name="description"
+			content="Laasya's tiny corner of the internet, guarded by floating cats."
+		/>
+		<link rel="icon" type="image/webp" href="cat.webp" />
+		<style>
+			:root {
+				--bg: #000000;
+				--panel: #4c061d;
+				--ink: #f5e2c8;
+				--accent: #6a7152;
+				--border: #6a7152;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				height: 100%;
+			}
+
+			body {
+				margin: 0;
+				min-height: 100%;
+				overflow: hidden;
+				background: var(--bg);
+				color: var(--ink);
+				font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
+					sans-serif;
+				line-height: 1.6;
+			}
+
+			.shake-root {
+				position: relative;
+				min-height: 100vh;
+				min-height: 100dvh;
+			}
+
+			/* Screen shake driven by JS-set custom properties during the explosion. */
+			.shake-root.shaking {
+				animation: shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+			}
+
+			@keyframes shake {
+				10%,
+				90% {
+					transform: translate(-4px, 2px) rotate(-0.4deg);
+				}
+				30%,
+				70% {
+					transform: translate(8px, -6px) rotate(0.8deg);
+				}
+				50% {
+					transform: translate(-10px, 4px) rotate(-1deg);
+				}
+				100% {
+					transform: none;
+				}
+			}
+
+			.page {
+				position: relative;
+				z-index: 2;
+				max-width: 46rem;
+				margin: 0 auto;
+				padding: clamp(3.5rem, 10vh, 7rem) 1.25rem 4rem;
+				display: grid;
+				gap: 2.5rem;
+				pointer-events: none;
+			}
+
+			.card {
+				pointer-events: auto;
+				padding: 0;
+				transition: transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1),
+					opacity 900ms ease;
+			}
+
+			/* Debris pieces are thrown by CSS custom properties set at explosion time. */
+			.card.debris {
+				transform: translate(var(--dx, 0px), var(--dy, 0px))
+					rotate(var(--dr, 0deg)) scale(var(--ds, 1));
+				opacity: 0;
+			}
+
+			h1,
+			h2 {
+				margin: 0 0 0.5rem;
+				line-height: 1.2;
+				letter-spacing: -0.02em;
+			}
+
+			h1 {
+				font-size: clamp(2rem, 6vw, 3rem);
+				color: var(--accent);
+			}
+
+			h2 {
+				font-size: clamp(1.25rem, 3.5vw, 1.6rem);
+			}
+
+			p {
+				margin: 0 0 0.75rem;
+				color: var(--ink);
+			}
+
+			p:last-child {
+				margin-bottom: 0;
+			}
+
+			a {
+				color: var(--accent);
+				text-underline-offset: 3px;
+			}
+
+			a:hover {
+				color: var(--ink);
+			}
+
+			.hint {
+				color: var(--accent);
+				font-weight: 600;
+			}
+
+			.cat-layer,
+			.particles {
+				position: fixed;
+				inset: 0;
+				z-index: 3;
+				pointer-events: none;
+			}
+
+			.particles {
+				z-index: 4;
+			}
+
+			.cat {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 84px;
+				height: 84px;
+				will-change: transform;
+				filter: drop-shadow(0 6px 14px #000000);
+			}
+
+			/* Wobble lives on an inner wrapper so the movement transform is never clobbered. */
+			.cat-inner {
+				width: 100%;
+				height: 100%;
+				display: block;
+				object-fit: contain;
+				transform-origin: 50% 50%;
+				user-select: none;
+				-webkit-user-drag: none;
+			}
+
+			.cat.spawning .cat-inner {
+				animation: pop-in 900ms ease-out both;
+			}
+
+			@keyframes pop-in {
+				from {
+					opacity: 0;
+					transform: scale(0.2);
+				}
+				to {
+					opacity: 1;
+					transform: scale(1);
+				}
+			}
+
+			.hud,
+			.banner {
+				position: fixed;
+				z-index: 6;
+				pointer-events: none;
+			}
+
+			.hud {
+				top: 1rem;
+				right: 1rem;
+				display: flex;
+				gap: 0.75rem;
+				padding: 0.5rem 0.9rem;
+				font-variant-numeric: tabular-nums;
+				font-size: 0.95rem;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 999px;
+			}
+
+			.hud-item strong {
+				color: var(--accent);
+			}
+
+			.banner {
+				left: 50%;
+				bottom: 2rem;
+				transform: translateX(-50%);
+				padding: 0.5rem 1.1rem;
+				border-radius: 999px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				font-weight: 600;
+				opacity: 0;
+				transition: opacity 200ms ease;
+				text-align: center;
+			}
+
+			.banner.visible {
+				opacity: 1;
+			}
+
+			.overlay {
+				position: fixed;
+				inset: 0;
+				z-index: 10;
+				display: grid;
+				place-items: center;
+				padding: 1.25rem;
+				background: var(--bg);
+			}
+
+			.overlay[hidden] {
+				display: none;
+			}
+
+			.overlay-box {
+				max-width: 26rem;
+				text-align: center;
+				padding: 2rem;
+				border-radius: 20px;
+				border: 1px solid var(--border);
+				background: var(--panel);
+				box-shadow: 0 30px 80px #000000;
+			}
+
+			.intro-box {
+				max-width: 30rem;
+				text-align: left;
+			}
+
+			.intro-box h2 {
+				margin-top: 1.5rem;
+			}
+
+			.intro-actions {
+				text-align: center;
+				margin-top: 1.5rem;
+			}
+
+			.countdown {
+				position: fixed;
+				inset: 0;
+				z-index: 7;
+				display: grid;
+				place-items: center;
+				pointer-events: none;
+				font-size: clamp(4rem, 14vw, 9rem);
+				font-weight: 800;
+				color: var(--accent);
+				text-shadow: 0 0 50px var(--accent), 0 12px 30px #000000;
+				opacity: 0;
+				transition: opacity 150ms ease;
+			}
+
+			.countdown.visible {
+				opacity: 1;
+			}
+
+			.countdown.pop {
+				animation: countdown-pop 550ms cubic-bezier(0.2, 0.8, 0.2, 1);
+			}
+
+			@keyframes countdown-pop {
+				0% {
+					transform: scale(0.5);
+					opacity: 0;
+				}
+				40% {
+					transform: scale(1.15);
+					opacity: 1;
+				}
+				100% {
+					transform: scale(1);
+					opacity: 1;
+				}
+			}
+
+			.score-line {
+				color: var(--ink);
+			}
+
+			.score-line strong {
+				color: var(--accent);
+				font-variant-numeric: tabular-nums;
+			}
+
+			button {
+				margin-top: 0.5rem;
+				padding: 0.7rem 1.4rem;
+				font: inherit;
+				font-weight: 700;
+				color: var(--ink);
+				background: var(--accent);
+				border: 0;
+				border-radius: 999px;
+				cursor: pointer;
+			}
+
+			button:hover {
+				filter: brightness(1.15);
+			}
+
+			button:focus-visible {
+				outline: 3px solid var(--ink);
+				outline-offset: 3px;
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				.shake-root.shaking {
+					animation: none;
+				}
+
+				.card {
+					transition: opacity 400ms ease;
+				}
+
+				.card.debris {
+					transform: none;
+				}
+
+				.cat.spawning .cat-inner {
+					animation: none;
+				}
+
+				.countdown.pop {
+					animation: none;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="shake-root" id="shakeRoot">
+			<main class="page" id="page">
+				<section class="card" data-debris>
+					<h1>Hello world!</h1>
+					<p>My name is Laasya!</p>
+					<p>
+						If you want to learn more about me, you can
+						<a href="https://mlaasya07.netlify.app">go to my personal website</a>!
+					</p>
+				</section>
+
+				<section class="card" data-debris>
+					<h2>🐈 Don't Touch The Cats</h2>
+					<p>
+						Cats are drifting around this page. If one bumps into your cursor,
+						the whole website explodes. Survive as long as you can.
+					</p>
+					<p class="hint" id="hint">Move your mouse to start.</p>
+				</section>
+			</main>
+
+			<div class="cat-layer" id="catLayer" aria-hidden="true"></div>
+			<canvas class="particles" id="particles" aria-hidden="true"></canvas>
+		</div>
+
+		<div class="hud" id="hud">
+			<span class="hud-item">⏱ <strong id="timer">0.00</strong>s</span>
+			<span class="hud-item">🏆 <strong id="best">0.00</strong>s</span>
+			<span class="hud-item">🐱 <strong id="catCount">1</strong></span>
+		</div>
+
+		<div class="banner" id="banner" role="status" aria-live="polite"></div>
+
+		<div class="countdown" id="countdown" aria-live="polite"></div>
+
+		<div class="overlay" id="introOverlay">
+			<div
+				class="overlay-box intro-box"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="introTitle"
+			>
+				<h1 id="introTitle">Hello world!</h1>
+				<p>My name is Laasya!</p>
+				<p>
+					If you want to learn more about me, you can
+					<a href="https://mlaasya07.netlify.app">go to my personal website</a>!
+				</p>
+				<h2>🐈 Don't Touch The Cats</h2>
+				<p>
+					Cats are drifting around this page. If one bumps into your cursor,
+					the whole website explodes. Survive as long as you can.
+				</p>
+				<p class="hint">Keep your cursor away from the cats!</p>
+				<div class="intro-actions">
+					<button type="button" id="beginGame">Let's go</button>
+				</div>
+			</div>
+		</div>
+			<div
+				class="overlay-box"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="overlayTitle"
+			>
+				<h2 id="overlayTitle">BOOM</h2>
+				<p>A cat found your cursor and the website did not survive.</p>
+				<p class="score-line">
+					You lasted <strong id="finalTime">0.00</strong>s ·
+					best <strong id="finalBest">0.00</strong>s
+				</p>
+				<button type="button" id="restart">Try again</button>
+			</div>
+		</div>
+
+		<script>
+			/**
+			 * "Don't Touch The Cats" — a tiny survival minigame.
+      **/
+			(() => {
+				"use strict";
+
+				const CONFIG = {
+					step: 1 / 120, // seconds per physics substep
+					maxFrame: 0.1, // clamp of accumulated frame time to avoid teleporting
+					catRadius: 34,
+					pointerRadius: 12,
+					baseSpeed: 170, // px/second at t=0
+					speedRamp: 11, // extra px/second for every second survived
+					maxSpeed: 620,
+					graceSeconds: 3,
+					spawnEvery: 9, // active seconds between new cats
+					maxCats: 7,
+					safeSpawnFromPointer: 260,
+					safeSpawnFromCat: 120,
+					spawnIntroSeconds: 0.9, // cats cannot kill you while fading in
+					particleCount: 90,
+				};
+
+				const STATE = {
+					IDLE: "idle",
+					GRACE: "grace",
+					RUNNING: "running",
+					PAUSED: "paused",
+					EXPLODING: "exploding",
+					GAME_OVER: "gameover",
+				};
+
+				const reduceMotion = window.matchMedia(
+					"(prefers-reduced-motion: reduce)"
+				);
+
+				const dom = {
+					shakeRoot: document.getElementById("shakeRoot"),
+					catLayer: document.getElementById("catLayer"),
+					canvas: document.getElementById("particles"),
+					timer: document.getElementById("timer"),
+					best: document.getElementById("best"),
+					catCount: document.getElementById("catCount"),
+					banner: document.getElementById("banner"),
+					countdown: document.getElementById("countdown"),
+					hint: document.getElementById("hint"),
+					introOverlay: document.getElementById("introOverlay"),
+					beginGame: document.getElementById("beginGame"),
+					overlay: document.getElementById("overlay"),
+					finalTime: document.getElementById("finalTime"),
+					finalBest: document.getElementById("finalBest"),
+					restart: document.getElementById("restart"),
+					debris: Array.from(document.querySelectorAll("[data-debris]")),
+				};
+
+				const ctx = dom.canvas.getContext("2d");
+
+				/** Reads the stored best time, tolerating unavailable or corrupt storage. */
+				function loadBest() {
+					try {
+						const raw = Number(window.localStorage.getItem("cat-game-best-ms"));
+						return Number.isFinite(raw) && raw >= 0 ? raw : 0;
+					} catch {
+						return 0;
+					}
+				}
+
+				/** Persists the best time, silently ignoring storage failures. */
+				function saveBest(ms) {
+					try {
+						window.localStorage.setItem("cat-game-best-ms", String(Math.round(ms)));
+					} catch {
+						/* storage unavailable (private mode, blocked cookies) — play on */
+					}
+				}
+
+				const game = {
+					state: STATE.IDLE,
+					activeTime: 0, // seconds of gameplay, excluding pauses
+					bestMs: loadBest(),
+					cats: [],
+					particles: [],
+					nextSpawnAt: CONFIG.spawnEvery,
+					lastFrame: 0,
+					accumulator: 0,
+					rafId: 0,
+					timeouts: new Set(),
+				};
+
+				const pointer = {
+					x: -9999,
+					y: -9999,
+					active: false, // inside the window and known
+					armed: false, // actually dangerous right now
+					isTouch: false,
+				};
+
+				/** Registers a timeout so every pending callback can be cancelled on reset. */
+				function later(fn, ms) {
+					const id = window.setTimeout(() => {
+						game.timeouts.delete(id);
+						fn();
+					}, ms);
+					game.timeouts.add(id);
+					return id;
+				}
+
+				function clearTimeouts() {
+					for (const id of game.timeouts) window.clearTimeout(id);
+					game.timeouts.clear();
+				}
+
+				function formatSeconds(ms) {
+					return (ms / 1000).toFixed(2);
+				}
+
+				function showBanner(text) {
+					dom.banner.textContent = text;
+					dom.banner.classList.toggle("visible", Boolean(text));
+				}
+
+				let countdownValue = "";
+
+				/** Updates the big on-screen countdown, re-popping only when the text changes. */
+				function setCountdown(text) {
+					if (text === countdownValue) return;
+					countdownValue = text;
+					dom.countdown.textContent = text;
+					dom.countdown.classList.toggle("visible", Boolean(text));
+					if (text) {
+						dom.countdown.classList.remove("pop");
+						void dom.countdown.offsetWidth;
+						dom.countdown.classList.add("pop");
+					}
+				}
+
+				/** Creates a cat at a position that is fair for the player, then tracks it. */
+				function spawnCat() {
+					if (game.cats.length >= CONFIG.maxCats) return;
+
+					const spot = findSafeSpawn();
+					const angle = Math.random() * Math.PI * 2;
+					const el = document.createElement("div");
+					el.className = "cat spawning";
+					el.innerHTML =
+						'<img class="cat-inner" src="cat.webp" alt="" draggable="false" />';
+					dom.catLayer.appendChild(el);
+
+					const cat = {
+						x: spot.x,
+						y: spot.y,
+						dirX: Math.cos(angle),
+						dirY: Math.sin(angle),
+						wobble: Math.random() * Math.PI * 2,
+						bornAt: game.activeTime,
+						el,
+						inner: el.querySelector(".cat-inner"),
+					};
+					game.cats.push(cat);
+					later(
+						() => el.classList.remove("spawning"),
+						CONFIG.spawnIntroSeconds * 1000
+					);
+					renderCat(cat);
+					dom.catCount.textContent = String(game.cats.length);
+				}
+
+				/** Picks a spawn point away from the pointer and from other cats. */
+				function findSafeSpawn() {
+					const pad = CONFIG.catRadius + 10;
+					let best = null;
+					let bestScore = -Infinity;
+
+					for (let i = 0; i < 40; i += 1) {
+						const x = pad + Math.random() * (window.innerWidth - pad * 2);
+						const y = pad + Math.random() * (window.innerHeight - pad * 2);
+						let score = pointer.active
+							? Math.hypot(x - pointer.x, y - pointer.y)
+							: Infinity;
+						for (const cat of game.cats) {
+							score = Math.min(score, Math.hypot(x - cat.x, y - cat.y) * 2);
+						}
+						if (
+							score > bestScore ||
+							(!pointer.active && score >= CONFIG.safeSpawnFromCat)
+						) {
+							bestScore = score;
+							best = { x, y };
+						}
+						if (
+							score >= CONFIG.safeSpawnFromPointer &&
+							score >= CONFIG.safeSpawnFromCat
+						) {
+							return { x, y };
+						}
+					}
+					return best || { x: window.innerWidth / 2, y: 80 };
+				}
+
+				function currentSpeed() {
+					return Math.min(
+						CONFIG.maxSpeed,
+						CONFIG.baseSpeed + game.activeTime * CONFIG.speedRamp
+					);
+				}
+
+				/**
+				 * Advances one fixed substep: moves cats, reflects them off the viewport
+				 * edges with overshoot correction, and reports a swept pointer collision.
+				 */
+				function stepPhysics(dt) {
+					const speed = currentSpeed() * (reduceMotion.matches ? 0.75 : 1);
+					const minX = CONFIG.catRadius;
+					const minY = CONFIG.catRadius;
+					const maxX = Math.max(minX, window.innerWidth - CONFIG.catRadius);
+					const maxY = Math.max(minY, window.innerHeight - CONFIG.catRadius);
+					let hit = false;
+
+					for (const cat of game.cats) {
+						const prevX = cat.x;
+						const prevY = cat.y;
+						let nextX = cat.x + cat.dirX * speed * dt;
+						let nextY = cat.y + cat.dirY * speed * dt;
+
+						// Reflect repeatedly so a big step cannot escape the viewport.
+						for (let i = 0; i < 4; i += 1) {
+							if (nextX < minX) {
+								nextX = minX + (minX - nextX);
+								cat.dirX = Math.abs(cat.dirX);
+							} else if (nextX > maxX) {
+								nextX = maxX - (nextX - maxX);
+								cat.dirX = -Math.abs(cat.dirX);
+							} else if (nextY < minY) {
+								nextY = minY + (minY - nextY);
+								cat.dirY = Math.abs(cat.dirY);
+							} else if (nextY > maxY) {
+								nextY = maxY - (nextY - maxY);
+								cat.dirY = -Math.abs(cat.dirY);
+							} else {
+								break;
+							}
+						}
+
+						cat.x = clamp(nextX, minX, maxX);
+						cat.y = clamp(nextY, minY, maxY);
+						cat.wobble += dt * 6;
+
+						const grown = game.activeTime - cat.bornAt >= CONFIG.spawnIntroSeconds;
+						if (
+							!hit &&
+							grown &&
+							pointer.armed &&
+							game.state === STATE.RUNNING &&
+							segmentDistance(prevX, prevY, cat.x, cat.y, pointer.x, pointer.y) <=
+								CONFIG.catRadius + CONFIG.pointerRadius
+						) {
+							hit = true;
+						}
+					}
+					return hit;
+				}
+
+				function clamp(value, min, max) {
+					return value < min ? min : value > max ? max : value;
+				}
+
+				/**
+				 * True when a cat is close enough to the pointer that ending the grace
+				 * period would be an unavoidable loss; also steers those cats away.
+				 */
+				function pointerIsCrowded() {
+					if (!pointer.armed) return false;
+					const danger = (CONFIG.catRadius + CONFIG.pointerRadius) * 2.5;
+					let crowded = false;
+					for (const cat of game.cats) {
+						const dx = cat.x - pointer.x;
+						const dy = cat.y - pointer.y;
+						const dist = Math.hypot(dx, dy) || 1;
+						if (dist <= danger) {
+							crowded = true;
+							cat.dirX = dx / dist;
+							cat.dirY = dy / dist;
+						}
+					}
+					return crowded;
+				}
+
+				/** Shortest distance from point (px,py) to the segment (ax,ay)-(bx,by). */
+				function segmentDistance(ax, ay, bx, by, px, py) {
+					const dx = bx - ax;
+					const dy = by - ay;
+					const lengthSq = dx * dx + dy * dy;
+					if (lengthSq === 0) return Math.hypot(px - ax, py - ay);
+					let t = ((px - ax) * dx + (py - ay) * dy) / lengthSq;
+					t = clamp(t, 0, 1);
+					return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+				}
+
+				/** Writes a cat's logical position to the DOM; decoration stays on the inner node. */
+				function renderCat(cat) {
+					const size = CONFIG.catRadius * 2;
+					cat.el.style.width = `${size}px`;
+					cat.el.style.height = `${size}px`;
+					cat.el.style.transform = `translate(${cat.x - CONFIG.catRadius}px, ${
+						cat.y - CONFIG.catRadius
+					}px)`;
+					if (!reduceMotion.matches) {
+						const tilt = Math.sin(cat.wobble) * 8 + cat.dirX * 6;
+						cat.inner.style.transform = `rotate(${tilt}deg)`;
+					}
+				}
+
+				function updateHud() {
+					dom.timer.textContent = formatSeconds(game.activeTime * 1000);
+					dom.best.textContent = formatSeconds(game.bestMs);
+					dom.catCount.textContent = String(game.cats.length);
+				}
+
+				function loop(timestamp) {
+					game.rafId = window.requestAnimationFrame(loop);
+
+					if (!game.lastFrame) game.lastFrame = timestamp;
+					const delta = Math.min(
+						(timestamp - game.lastFrame) / 1000,
+						CONFIG.maxFrame
+					);
+					game.lastFrame = timestamp;
+
+					if (game.state === STATE.GRACE || game.state === STATE.RUNNING) {
+						game.accumulator += delta;
+						while (game.accumulator >= CONFIG.step) {
+							game.accumulator -= CONFIG.step;
+							game.activeTime += CONFIG.step;
+
+							if (game.state === STATE.GRACE && game.activeTime >= graceTarget) {
+								if (pointerIsCrowded()) {
+									// Don't drop the shield while a cat is already on top of
+									// the cursor; shoo it away and hold grace a moment longer.
+									graceTarget = game.activeTime + 0.4;
+								} else {
+									game.state = STATE.RUNNING;
+									showBanner("");
+									setCountdown("Go!");
+									later(() => setCountdown(""), 550);
+								}
+							}
+
+							const hit = stepPhysics(CONFIG.step);
+							if (hit) {
+								explode();
+								break;
+							}
+
+							if (
+								game.state === STATE.RUNNING &&
+								game.activeTime >= game.nextSpawnAt
+							) {
+								game.nextSpawnAt += CONFIG.spawnEvery;
+								spawnCat();
+								showBanner("A new cat has entered the chat 🐈");
+								later(() => showBanner(""), 1600);
+							}
+						}
+						for (const cat of game.cats) renderCat(cat);
+						updateHud();
+						if (game.state === STATE.GRACE) {
+							const remaining = graceTarget - game.activeTime;
+							const n = Math.ceil(remaining - 0.001);
+							setCountdown(n > 0 ? String(n) : "");
+						}
+					}
+
+					drawParticles(delta);
+				}
+
+				/* ---------------------------------------------------------------- *
+				 * Explosion + particles
+				 * ---------------------------------------------------------------- */
+
+				/** Ends the run: throws the page content, bursts particles, shows the overlay. */
+				function explode() {
+					if (game.state === STATE.EXPLODING || game.state === STATE.GAME_OVER)
+						return;
+					game.state = STATE.EXPLODING;
+					showBanner("");
+
+					const finalMs = game.activeTime * 1000;
+					if (finalMs > game.bestMs) {
+						game.bestMs = finalMs;
+						saveBest(finalMs);
+					}
+
+					if (!reduceMotion.matches) {
+						dom.shakeRoot.classList.add("shaking");
+						for (const piece of dom.debris) {
+							piece.style.setProperty("--dx", `${(Math.random() - 0.5) * 900}px`);
+							piece.style.setProperty("--dy", `${(Math.random() - 0.4) * 900}px`);
+							piece.style.setProperty("--dr", `${(Math.random() - 0.5) * 120}deg`);
+							piece.style.setProperty("--ds", `${0.4 + Math.random() * 0.4}`);
+						}
+					}
+					for (const piece of dom.debris) piece.classList.add("debris");
+
+					burstParticles(pointer.x, pointer.y);
+					for (const cat of game.cats) cat.el.style.opacity = "0";
+
+					later(() => {
+						game.state = STATE.GAME_OVER;
+						dom.finalTime.textContent = formatSeconds(finalMs);
+						dom.finalBest.textContent = formatSeconds(game.bestMs);
+						dom.overlay.hidden = false;
+						dom.restart.focus();
+						updateHud();
+					}, 850);
+				}
+
+				/** Emits a short-lived canvas particle burst at the collision point. */
+				function burstParticles(x, y) {
+					const count = reduceMotion.matches
+						? Math.round(CONFIG.particleCount / 4)
+						: CONFIG.particleCount;
+					const colors = ["#4c061d", "#6a7152"];
+					for (let i = 0; i < count; i += 1) {
+						const angle = Math.random() * Math.PI * 2;
+						const speed = 120 + Math.random() * 520;
+						game.particles.push({
+							x,
+							y,
+							vx: Math.cos(angle) * speed,
+							vy: Math.sin(angle) * speed,
+							life: 0.8 + Math.random() * 0.8,
+							age: 0,
+							size: 2 + Math.random() * 5,
+							color: colors[i % colors.length],
+						});
+					}
+				}
+
+				/** Integrates and paints particles; a no-op once the list drains. */
+				function drawParticles(delta) {
+					if (!game.particles.length) {
+						ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+						return;
+					}
+					ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+					const alive = [];
+					for (const p of game.particles) {
+						p.age += delta;
+						if (p.age >= p.life) continue;
+						p.vy += 900 * delta;
+						p.x += p.vx * delta;
+						p.y += p.vy * delta;
+						ctx.globalAlpha = Math.max(0, 1 - p.age / p.life);
+						ctx.fillStyle = p.color;
+						ctx.beginPath();
+						ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+						ctx.fill();
+						alive.push(p);
+					}
+					ctx.globalAlpha = 1;
+					game.particles = alive;
+				}
+
+				/* ---------------------------------------------------------------- *
+				 * Lifecycle
+				 * ---------------------------------------------------------------- */
+
+				/** Tears down a finished round and arms a fresh one. */
+				function resetGame() {
+					clearTimeouts();
+					for (const cat of game.cats) cat.el.remove();
+					game.cats = [];
+					game.particles = [];
+					ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+					setCountdown("");
+
+					dom.shakeRoot.classList.remove("shaking");
+					for (const piece of dom.debris) {
+						piece.classList.remove("debris");
+						piece.style.removeProperty("--dx");
+						piece.style.removeProperty("--dy");
+						piece.style.removeProperty("--dr");
+						piece.style.removeProperty("--ds");
+					}
+					dom.overlay.hidden = true;
+
+					game.activeTime = 0;
+					game.accumulator = 0;
+					game.nextSpawnAt = CONFIG.spawnEvery;
+					game.lastFrame = 0;
+					updateHud();
+
+					spawnCat();
+					startRound();
+				}
+
+				/** Enters the grace period if the pointer is ready, otherwise waits for it. */
+				function startRound() {
+					graceTarget = game.activeTime + CONFIG.graceSeconds;
+					if (pointer.active) {
+						game.state = STATE.GRACE;
+						showBanner("Get ready…");
+						dom.hint.textContent = "Keep your cursor away from the cats!";
+					} else {
+						game.state = STATE.IDLE;
+						setCountdown("");
+						showBanner(
+							pointer.isTouch
+								? "Touch and drag to play."
+								: "Move your mouse to start."
+						);
+					}
+				}
+
+				/** Resumes play after the pointer returns, with a fresh grace window. */
+				function resumeFromPause() {
+					if (game.state !== STATE.PAUSED && game.state !== STATE.IDLE) return;
+					game.state = STATE.GRACE;
+					game.accumulator = 0;
+					game.lastFrame = 0;
+					graceTarget = game.activeTime + CONFIG.graceSeconds;
+					// Never let a spawn land during the resume grace window.
+					game.nextSpawnAt = Math.max(game.nextSpawnAt, graceTarget);
+					dom.hint.textContent = "Keep your cursor away from the cats!";
+					showBanner("Get ready…");
+				}
+
+				let graceTarget = CONFIG.graceSeconds;
+
+				function pauseGame(reason) {
+					if (game.state !== STATE.RUNNING && game.state !== STATE.GRACE) return;
+					game.state = STATE.PAUSED;
+					showBanner(reason);
+					setCountdown("");
+				}
+
+				function resizeCanvas() {
+					const dpr = Math.min(window.devicePixelRatio || 1, 2);
+					dom.canvas.width = Math.round(window.innerWidth * dpr);
+					dom.canvas.height = Math.round(window.innerHeight * dpr);
+					dom.canvas.style.width = `${window.innerWidth}px`;
+					dom.canvas.style.height = `${window.innerHeight}px`;
+					ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+					for (const cat of game.cats) {
+						cat.x = clamp(
+							cat.x,
+							CONFIG.catRadius,
+							window.innerWidth - CONFIG.catRadius
+						);
+						cat.y = clamp(
+							cat.y,
+							CONFIG.catRadius,
+							window.innerHeight - CONFIG.catRadius
+						);
+						renderCat(cat);
+					}
+				}
+
+				/* ---------------------------------------------------------------- *
+				 * Input
+				 * ---------------------------------------------------------------- */
+
+				window.addEventListener(
+					"pointermove",
+					(event) => {
+						pointer.x = event.clientX;
+						pointer.y = event.clientY;
+						pointer.isTouch = event.pointerType !== "mouse";
+						pointer.active = true;
+						// A finger is only dangerous while it is pressed against the screen.
+						pointer.armed = pointer.isTouch
+							? event.pressure > 0 || event.buttons > 0
+							: true;
+						if (game.state === STATE.IDLE || game.state === STATE.PAUSED) {
+							resumeFromPause();
+						}
+					},
+					{ passive: true }
+				);
+
+				window.addEventListener("pointerdown", (event) => {
+					pointer.x = event.clientX;
+					pointer.y = event.clientY;
+					pointer.isTouch = event.pointerType !== "mouse";
+					pointer.active = true;
+					pointer.armed = true;
+					if (game.state === STATE.IDLE || game.state === STATE.PAUSED)
+						resumeFromPause();
+				});
+
+				for (const type of ["pointerup", "pointercancel"]) {
+					window.addEventListener(type, () => {
+						if (pointer.isTouch) {
+							pointer.armed = false;
+							pauseGame("Touch and drag to keep playing.");
+						}
+					});
+				}
+
+				document.addEventListener("pointerleave", () => {
+					pointer.active = false;
+					pointer.armed = false;
+					pauseGame("Paused — bring your cursor back.");
+				});
+
+				document.addEventListener("visibilitychange", () => {
+					if (document.hidden) {
+						pauseGame("Paused.");
+					} else {
+						game.lastFrame = 0;
+					}
+				});
+
+				window.addEventListener("resize", resizeCanvas);
+				window.addEventListener("blur", () => pauseGame("Paused."));
+
+				dom.restart.addEventListener("click", () => {
+					pointer.armed = !pointer.isTouch && pointer.active;
+					resetGame();
+				});
+
+				dom.beginGame.addEventListener("click", (event) => {
+					dom.introOverlay.hidden = true;
+					// A real click/tap carries a position — treat it as the pointer
+					// arriving so the countdown can start right away.
+					if (event.clientX || event.clientY) {
+						pointer.x = event.clientX;
+						pointer.y = event.clientY;
+						pointer.isTouch = event.pointerType
+							? event.pointerType !== "mouse"
+							: pointer.isTouch;
+						pointer.active = true;
+						pointer.armed = true;
+					}
+					spawnCat();
+					startRound();
+				});
+
+				/* ---------------------------------------------------------------- *
+				 * Boot
+				 * ---------------------------------------------------------------- */
+
+				resizeCanvas();
+				updateHud();
+				game.rafId = window.requestAnimationFrame(loop);
+			})();
+		</script>
+	</body>
+</html>
